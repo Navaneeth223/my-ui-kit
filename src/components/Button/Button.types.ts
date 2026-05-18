@@ -5,13 +5,12 @@ export type ButtonVariant =
   | 'secondary'
   | 'ghost'
   | 'danger'
+  | 'success'
   | 'gradient'
-  | 'neon'
-  | 'glass';
+  | 'glass'
+  | 'neon';
 
-export type ButtonSize = 'sm' | 'md' | 'lg' | 'xl';
-
-export type ButtonAnimation = 'subtle' | 'playful' | 'dramatic';
+export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 export type ButtonStatus = 'idle' | 'success' | 'error';
 
@@ -19,13 +18,16 @@ export type ButtonEffect =
   | 'ripple'
   | 'magnetic'
   | 'shimmer'
-  | 'glowPulse'
+  | 'pulse'
   | 'gradientBorder';
+
+export type ButtonGroupOrientation = 'horizontal' | 'vertical';
+
+export type ButtonGroupVariant = 'default' | 'segmented';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
-  animation?: ButtonAnimation;
   status?: ButtonStatus;
   loading?: boolean;
   skeleton?: boolean;
@@ -38,6 +40,15 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   errorLabel?: string;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  badge?: React.ReactNode;
+  badgeLabel?: string;
+}
+
+export interface ButtonGroupProps extends React.HTMLAttributes<HTMLDivElement> {
+  orientation?: ButtonGroupOrientation;
+  variant?: ButtonGroupVariant;
+  size?: ButtonSize;
+  disabled?: boolean;
 }
 
 export interface Ripple {
