@@ -1,21 +1,22 @@
 import * as React from 'react';
-import type { ButtonEffect, ButtonProps, Ripple } from './Button.types';
+import type { ButtonProps, Ripple } from './Button.types';
 import { hasEffect, injectButtonStyles, playButtonSound } from './Button.utils';
 
-type UseButtonOptions = Pick<ButtonProps, 'disabled' | 'loading' | 'effects' | 'magneticStrength' | 'sound' | 'onClick'>;
+type UseButtonOptions = Pick<ButtonProps, 'disabled' | 'loading' | 'skeleton' | 'effects' | 'magneticStrength' | 'sound' | 'onClick'>;
 
 export const useButton = ({
   disabled,
   loading,
+  skeleton,
   effects,
-  magneticStrength = 0.22,
+  magneticStrength = 0.3,
   sound = false,
   onClick,
 }: UseButtonOptions) => {
   const [ripples, setRipples] = React.useState<Ripple[]>([]);
   const [magneticStyle, setMagneticStyle] = React.useState<React.CSSProperties>({});
   const rippleId = React.useRef(0);
-  const isInteractive = !disabled && !loading;
+  const isInteractive = !disabled && !loading && !skeleton;
 
   React.useEffect(() => {
     injectButtonStyles();
@@ -66,11 +67,11 @@ export const useButton = ({
       }
 
       const rect = event.currentTarget.getBoundingClientRect();
-      const x = (event.clientX - rect.left - rect.width / 2) * magneticStrength;
-      const y = (event.clientY - rect.top - rect.height / 2) * magneticStrength;
+      const x = Math.max(-8, Math.min(8, (event.clientX - rect.left - rect.width / 2) * magneticStrength));
+      const y = Math.max(-8, Math.min(8, (event.clientY - rect.top - rect.height / 2) * magneticStrength));
       setMagneticStyle({
-        '--button-magnetic-x': `${x.toFixed(2)}px`,
-        '--button-magnetic-y': `${y.toFixed(2)}px`,
+        '--uik-button-magnetic-x': `${x.toFixed(2)}px`,
+        '--uik-button-magnetic-y': `${y.toFixed(2)}px`,
       } as React.CSSProperties);
     },
     [effects, isInteractive, magneticStrength],
@@ -79,8 +80,8 @@ export const useButton = ({
   const resetMagnetic = React.useCallback(() => {
     if (hasEffect(effects, 'magnetic')) {
       setMagneticStyle({
-        '--button-magnetic-x': '0px',
-        '--button-magnetic-y': '0px',
+        '--uik-button-magnetic-x': '0px',
+        '--uik-button-magnetic-y': '0px',
       } as React.CSSProperties);
     }
   }, [effects]);

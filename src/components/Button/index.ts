@@ -1,7 +1,9 @@
-export { Button } from './Button';
+export { Button, ButtonGroup } from './Button';
 export { useButton } from './useButton';
 export type {
-  ButtonAnimation,
+  ButtonGroupOrientation,
+  ButtonGroupProps,
+  ButtonGroupVariant,
   ButtonEffect,
   ButtonProps,
   ButtonSize,
