@@ -1,117 +1,152 @@
-import * as React from 'react';
+﻿import * as React from 'react';
 import type { ButtonGroupProps, ButtonProps } from './Button.types';
-import { hasEffect, injectButtonStyles } from './Button.utils';
 import { useButton } from './useButton';
+import { injectStyle } from './Button.utils';
+import { BUTTON_CSS } from './Button.styles';
 
 const SuccessIcon = () => (
-  <svg className="uik-button__status-icon uik-button__status-icon--success" viewBox="0 0 16 16" aria-hidden="true">
-    <path d="M3.5 8.2 6.7 11.2 12.8 4.8" />
+  <svg viewBox="0 0 24 24" aria-hidden="true" className="uik-button__status-icon uik-button__status-icon--success">
+    <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
 const ErrorIcon = () => (
-  <svg className="uik-button__status-icon uik-button__status-icon--error" viewBox="0 0 16 16" aria-hidden="true">
-    <path d="M4.5 4.5 11.5 11.5M11.5 4.5 4.5 11.5" />
+  <svg viewBox="0 0 24 24" aria-hidden="true" className="uik-button__status-icon uik-button__status-icon--error">
+    <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       variant = 'primary',
       size = 'md',
       status = 'idle',
-      loading = false,
-      skeleton = false,
+      iconLeft,
+      iconRight,
       fullWidth = false,
-      effects = ['ripple', 'magnetic'],
-      magneticStrength,
-      sound = false,
-      loadingLabel = 'Loading',
-      successLabel,
-      errorLabel,
-      leftIcon,
-      rightIcon,
-      badge,
-      badgeLabel,
-      children,
-      disabled,
+      magnetic = true,
+      pulse = false,
+      count,
+      neonColor = 'blue',
+      onStatusReset,
+      disabled = false,
       className,
       style,
       type = 'button',
-      role,
-      id,
-      'aria-label': ariaLabel,
-      'aria-describedby': ariaDescribedBy,
+      children,
+      onClick,
+      onKeyDown,
+      onMouseDown,
+      onPointerMove,
+      onPointerLeave,
       ...props
     },
     ref,
   ) => {
-    const reactId = React.useId();
-    const buttonId = id ?? `uik-button-${reactId}`;
-    const liveId = `${buttonId}-live`;
-    const { ripples, magneticStyle, handleClick, handlePointerMove, handlePointerLeave } = useButton({
-      disabled,
-      loading,
-      skeleton,
-      effects,
-      magneticStrength,
-      sound,
-      onClick: props.onClick,
+    React.useEffect(() => {
+      injectStyle('uik-button', BUTTON_CSS);
+    }, []);
+
+    const isLoading = status === 'loading';
+    const isSuccess = status === 'success';
+    const isError = status === 'error';
+    const isDisabled = disabled || isLoading;
+
+    const {
+      ripples,
+      magneticStyle,
+      handleMouseDown,
+      handleKeyDown,
+      handlePointerMove,
+      handlePointerLeave,
+    } = useButton({
+      disabled: Boolean(disabled),
+      status,
+      magnetic,
+      size,
     });
 
-    const isDisabled = disabled || loading || skeleton;
-    const label = React.useMemo(() => {
-      if (loading) {
-        return loadingLabel;
-      }
-      if (status === 'success' && successLabel) {
-        return successLabel;
-      }
-      if (status === 'error' && errorLabel) {
-        return errorLabel;
-      }
-      return children;
-    }, [children, errorLabel, loading, loadingLabel, status, successLabel]);
+    const handleMouseDownWrapped = React.useCallback(
+      (event: React.MouseEvent<HTMLButtonElement>) => {
+        handleMouseDown(event);
+        onMouseDown?.(event);
+      },
+      [handleMouseDown, onMouseDown],
+    );
 
-    const accessibleLabel = ariaLabel || (typeof label === 'string' ? label : loading ? loadingLabel : undefined);
-    const mergedClassName = React.useMemo(() => ['uik-button', className].filter(Boolean).join(' '), [className]);
-    const mergedStyle = React.useMemo(
-      () =>
-        ({
-          '--uik-button-width': fullWidth ? '100%' : 'auto',
-          ...magneticStyle,
-          ...style,
-        }) as React.CSSProperties,
+    const handleKeyDownWrapped = React.useCallback(
+      (event: React.KeyboardEvent<HTMLButtonElement>) => {
+        handleKeyDown(event);
+        onKeyDown?.(event);
+      },
+      [handleKeyDown, onKeyDown],
+    );
+
+    const handlePointerMoveWrapped = React.useCallback(
+      (event: React.PointerEvent<HTMLButtonElement>) => {
+        handlePointerMove(event);
+        onPointerMove?.(event);
+      },
+      [handlePointerMove, onPointerMove],
+    );
+
+    const handlePointerLeaveWrapped = React.useCallback(
+      (event: React.PointerEvent<HTMLButtonElement>) => {
+        handlePointerLeave();
+        onPointerLeave?.(event);
+      },
+      [handlePointerLeave, onPointerLeave],
+    );
+
+    React.useEffect(() => {
+      if ((isSuccess || isError) && onStatusReset) {
+        const timer = window.setTimeout(onStatusReset, 2000);
+        return () => window.clearTimeout(timer);
+      }
+      return undefined;
+    }, [isSuccess, isError, onStatusReset]);
+
+    const buttonClassName = React.useMemo(
+      () => ['uik-button', className].filter(Boolean).join(' '),
+      [className],
+    );
+
+    const buttonStyle = React.useMemo(
+      () => ({
+        width: fullWidth ? '100%' : 'auto',
+        ...magneticStyle,
+        ...style,
+      } as React.CSSProperties),
       [fullWidth, magneticStyle, style],
     );
+
+    const hasBadge = typeof count === 'number' && count > 0;
+    const badgeCount = hasBadge ? count : undefined;
 
     return (
       <button
         {...props}
         ref={ref}
-        id={buttonId}
         type={type}
-        role={role ?? 'button'}
-        className={mergedClassName}
+        className={buttonClassName}
         data-variant={variant}
         data-size={size}
         data-status={status}
-        data-skeleton={skeleton ? 'true' : undefined}
-        data-shimmer={hasEffect(effects, 'shimmer') ? 'true' : undefined}
-        data-pulse={hasEffect(effects, 'pulse') ? 'true' : undefined}
-        data-gradient-border={hasEffect(effects, 'gradientBorder') ? 'true' : undefined}
-        aria-busy={loading ? 'true' : undefined}
+        data-pulse={pulse ? 'true' : undefined}
+        data-neon-color={variant === 'neon' ? neonColor : undefined}
+        data-count={badgeCount !== undefined ? String(badgeCount) : undefined}
+        aria-busy={isLoading ? 'true' : undefined}
         aria-disabled={isDisabled ? 'true' : undefined}
-        aria-describedby={[ariaDescribedBy, liveId].filter(Boolean).join(' ') || undefined}
-        aria-label={accessibleLabel}
         disabled={isDisabled}
-        onClick={handleClick}
-        onPointerMove={handlePointerMove}
-        onPointerLeave={handlePointerLeave}
-        style={mergedStyle}
+        onClick={onClick}
+        onMouseDown={handleMouseDownWrapped}
+        onKeyDown={handleKeyDownWrapped}
+        onPointerMove={handlePointerMoveWrapped}
+        onPointerLeave={handlePointerLeaveWrapped}
+        style={buttonStyle}
       >
-        <span className="uik-button__shimmer" aria-hidden="true" />
+        <span className="uik-button__shine" aria-hidden="true" />
         {ripples.map((ripple) => (
           <span
             key={ripple.id}
@@ -126,28 +161,34 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             }
           />
         ))}
-        {loading ? <span className="uik-button__spinner" aria-hidden="true" /> : null}
-        {!loading && status === 'success' ? <SuccessIcon /> : null}
-        {!loading && status === 'error' ? <ErrorIcon /> : null}
-        {!loading && status === 'idle' && leftIcon ? (
+
+        {isLoading ? (
+          <span className="uik-button__spinner" aria-hidden="true" />
+        ) : isSuccess ? (
+          <SuccessIcon />
+        ) : isError ? (
+          <ErrorIcon />
+        ) : null}
+
+        {!isLoading && !isSuccess && !isError && iconLeft ? (
           <span className="uik-button__icon uik-button__icon--left" aria-hidden="true">
-            {leftIcon}
+            {iconLeft}
           </span>
         ) : null}
-        <span className="uik-button__content">{label}</span>
-        {!loading && status === 'idle' && rightIcon ? (
+
+        <span className="uik-button__content">{isLoading ? 'Loading' : children}</span>
+
+        {!isLoading && !isSuccess && !isError && iconRight ? (
           <span className="uik-button__icon uik-button__icon--right" aria-hidden="true">
-            {rightIcon}
+            {iconRight}
           </span>
         ) : null}
-        {badge !== undefined && badge !== null ? (
-          <span className="uik-button__badge" aria-label={badgeLabel}>
-            {badge}
+
+        {hasBadge ? (
+          <span key={badgeCount} className="uik-button__badge" aria-hidden="true">
+            {badgeCount}
           </span>
         ) : null}
-        <span id={liveId} aria-live="polite" hidden>
-          {loading ? loadingLabel : status === 'success' ? successLabel ?? 'Success' : status === 'error' ? errorLabel ?? 'Error' : ''}
-        </span>
       </button>
     );
   },
@@ -156,51 +197,51 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = 'Button';
 
 export const ButtonGroup = React.forwardRef<HTMLDivElement, ButtonGroupProps>(
-  (
-    {
-      orientation = 'horizontal',
-      variant = 'default',
-      size,
-      disabled = false,
-      children,
-      className,
-      role,
-      'aria-label': ariaLabel,
-      ...props
-    },
-    ref,
-  ) => {
+  ({ children, variant = 'primary', size = 'md', segmented = false, value, onChange, disabled = false, className, ...props }, ref) => {
     React.useEffect(() => {
-      injectButtonStyles();
+      injectStyle('uik-button', BUTTON_CSS);
     }, []);
 
-    const groupClassName = React.useMemo(() => ['uik-button-group', className].filter(Boolean).join(' '), [className]);
+    const groupClassName = React.useMemo(
+      () => ['uik-button-group', className].filter(Boolean).join(' '),
+      [className],
+    );
+
     const enhancedChildren = React.useMemo(
       () =>
-        React.Children.map(children, (child) => {
+        React.Children.map(children, (child, index) => {
           if (!React.isValidElement<ButtonProps>(child)) {
             return child;
           }
 
-          return React.cloneElement(child, {
+          const childValue = child.props.value !== undefined ? String(child.props.value) : String(index);
+          const selected = segmented && value !== undefined && String(value) === childValue;
+
+          const previousOnClick = child.props.onClick;
+          const handleChildClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+            previousOnClick?.(event);
+            if (segmented && onChange && !selected) {
+              onChange(childValue);
+            }
+          };
+
+          const cloneProps = {
+            variant: child.props.variant ?? variant,
             size: child.props.size ?? size,
             disabled: child.props.disabled ?? disabled,
-          });
+            'data-segmented': segmented ? 'true' : undefined,
+            'data-selected': selected ? 'true' : undefined,
+            onClick: handleChildClick,
+          } as React.ComponentPropsWithoutRef<'button'> & Record<string, unknown>;
+
+          return React.cloneElement(child, cloneProps);
+
         }),
-      [children, disabled, size],
+      [children, segmented, size, variant, value, onChange],
     );
 
     return (
-      <div
-        {...props}
-        ref={ref}
-        className={groupClassName}
-        data-orientation={orientation}
-        data-variant={variant}
-        role={role ?? (variant === 'segmented' ? 'radiogroup' : 'group')}
-        aria-label={ariaLabel}
-        aria-disabled={disabled ? 'true' : undefined}
-      >
+      <div ref={ref} className={groupClassName} data-segmented={segmented ? 'true' : undefined} {...props}>
         {enhancedChildren}
       </div>
     );
@@ -208,3 +249,5 @@ export const ButtonGroup = React.forwardRef<HTMLDivElement, ButtonGroupProps>(
 );
 
 ButtonGroup.displayName = 'ButtonGroup';
+
+export { Button };

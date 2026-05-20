@@ -12,43 +12,32 @@ export type ButtonVariant =
 
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-export type ButtonStatus = 'idle' | 'success' | 'error';
+export type ButtonStatus = 'idle' | 'loading' | 'success' | 'error';
 
-export type ButtonEffect =
-  | 'ripple'
-  | 'magnetic'
-  | 'shimmer'
-  | 'pulse'
-  | 'gradientBorder';
-
-export type ButtonGroupOrientation = 'horizontal' | 'vertical';
-
-export type ButtonGroupVariant = 'default' | 'segmented';
+export type NeonColor = 'blue' | 'purple' | 'green' | 'pink';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
   status?: ButtonStatus;
-  loading?: boolean;
-  skeleton?: boolean;
+  iconLeft?: React.ReactNode;
+  iconRight?: React.ReactNode;
   fullWidth?: boolean;
-  effects?: ButtonEffect[];
-  magneticStrength?: number;
-  sound?: boolean;
-  loadingLabel?: string;
-  successLabel?: string;
-  errorLabel?: string;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
-  badge?: React.ReactNode;
-  badgeLabel?: string;
+  magnetic?: boolean;
+  pulse?: boolean;
+  count?: number;
+  neonColor?: NeonColor;
+  onStatusReset?: () => void;
 }
 
-export interface ButtonGroupProps extends React.HTMLAttributes<HTMLDivElement> {
-  orientation?: ButtonGroupOrientation;
-  variant?: ButtonGroupVariant;
+export interface ButtonGroupProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> {
+  children: React.ReactNode;
+  variant?: ButtonVariant;
   size?: ButtonSize;
+  segmented?: boolean;
+  value?: string;
   disabled?: boolean;
+  onChange?: (value: string) => void;
 }
 
 export interface Ripple {
